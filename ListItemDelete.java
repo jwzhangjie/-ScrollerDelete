@@ -76,11 +76,20 @@ public class ListItemDelete extends LinearLayout {
 		case MotionEvent.ACTION_UP:
 			Log.e("test", "item  ACTION_UP");
 			int scroll = getScrollX();
-			if (scroll > back_width / 2) {
-				scrollTo(back_width, 0);
+			if (deltaX > 0) {
+				if (scroll > back_width / 4) {
+					scrollTo(back_width, 0);
+				} else {
+					scrollTo(0, 0);
+				}
 			} else {
-				scrollTo(0, 0);
+				if (scroll > back_width * 3 / 4) {
+					scrollTo(back_width, 0);
+				} else {
+					scrollTo(0, 0);
+				}
 			}
+
 			if (Math.abs(x - downX) < 5) {// 这里根据点击距离来判断是否是itemClick
 				return false;
 			}
