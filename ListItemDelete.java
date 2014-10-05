@@ -1,21 +1,21 @@
 package com.jwzhangjie.scrollview;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.Scroller;
 
 public class ListItemDelete extends LinearLayout {
 
-	private Scroller mScroller;// 滑动控制
 	private float mLastMotionX;// 记住上次触摸屏的位置
 	private int deltaX;
-	private int back_width;
+	private int back_width;//滑动显示组件的宽度
 	private float downX;
-
+	private int itemClickMin = 5;//判断onItemClick的最大距离
+	
 	public ListItemDelete(Context context) {
 		this(context, null);
 	}
@@ -26,16 +26,9 @@ public class ListItemDelete extends LinearLayout {
 	}
 
 	private void init(Context context) {
-		mScroller = new Scroller(context);
+		
 	}
 
-	@Override
-	public void computeScroll() {
-		if (mScroller.computeScrollOffset()) {// 会更新Scroller中的当前x,y位置
-			scrollTo(mScroller.getCurrX(), mScroller.getCurrY());
-			postInvalidate();
-		}
-	}
 
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
@@ -47,9 +40,14 @@ public class ListItemDelete extends LinearLayout {
 				back_width = getChildAt(i).getMeasuredWidth();
 			}
 		}
-
+	}
+	
+	public void reSet(){
+		scrollTo(0, 0);
+		DeleteAdapter.itemDelete = null;
 	}
 
+	@SuppressLint("ClickableViewAccessibility")
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
 		int action = event.getAction();
@@ -70,32 +68,34 @@ public class ListItemDelete extends LinearLayout {
 			} else if (scrollx > back_width) {
 				scrollTo(back_width, 0);
 			} else if (scrollx < 0) {
-				scrollTo(0, 0);
+				reSet();
 			}
 			break;
 		case MotionEvent.ACTION_UP:
 			Log.e("test", "item  ACTION_UP");
 			int scroll = getScrollX();
+			if (Math.abs(x - downX) < itemClickMin) {// 这里根据点击距离来判断是否是itemClick
+				DeleteAdapter.ItemDeleteReset();
+				return false;
+			}
 			if (deltaX > 0) {
 				if (scroll > back_width / 4) {
 					scrollTo(back_width, 0);
+					DeleteAdapter.itemDelete = this;
 				} else {
-					scrollTo(0, 0);
+					reSet();
 				}
 			} else {
 				if (scroll > back_width * 3 / 4) {
 					scrollTo(back_width, 0);
+					DeleteAdapter.itemDelete = this;
 				} else {
-					scrollTo(0, 0);
+					reSet();
 				}
-			}
-
-			if (Math.abs(x - downX) < 5) {// 这里根据点击距离来判断是否是itemClick
-				return false;
 			}
 			break;
 		case MotionEvent.ACTION_CANCEL:
-			scrollTo(0, 0);
+			reSet();
 			break;
 		}
 		return true;
@@ -103,6 +103,7 @@ public class ListItemDelete extends LinearLayout {
 
 	@Override
 	protected void onLayout(boolean changed, int l, int t, int r, int b) {
+		super.onLayout(changed, l, t, r, b);
 		int margeLeft = 0;
 		int size = getChildCount();
 		for (int i = 0; i < size; i++) {
